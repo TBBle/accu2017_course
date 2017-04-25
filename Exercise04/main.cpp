@@ -12,7 +12,7 @@ class cad_report {
   std::string _val;
 
 public:
-  cad_report() : _id(-1) {}
+  cad_report() : _id(-1), _val("Loading") {}
 
   cad_report(int id) : _id(id) {
     std::this_thread::sleep_for(std::chrono::seconds(3 * (_id + 1)));
@@ -54,20 +54,15 @@ private:
     _reports.clear();
     _reports.resize(_reportLoads.size());
     _currentReport = -1;
-    _oneBtn.enabled(false);
-    _twoBtn.enabled(false);
+    _oneBtn.enabled(true);
+    _twoBtn.enabled(true);
 
     for (size_t i = 0; i < _reportLoads.size(); ++i) {
       _reportLoads[i].reset();
       _reportLoads[i] = stlab::async(stlab::default_executor, [this, i]() {
         _reports[i] = cad_report((int)i);
-        switch (i) {
-        case 0:
-          _oneBtn.enabled(true);
-          break;
-        case 1:
-          _twoBtn.enabled(true);
-          break;
+        if (_currentReport == i) {
+          showReport(_reports[i]);
         }
       });
     }
@@ -76,7 +71,10 @@ private:
     _status.caption("Status: Reset done.");
   }
 
-  void displayReport(int id) { showReport(_reports[id]); }
+  void displayReport(int id) {
+    _currentReport = id;
+    showReport(_reports[id]);
+  }
 
   void showReport(const cad_report &report) {
     _label.caption("Report " + report.val());
