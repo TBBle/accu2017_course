@@ -1,29 +1,73 @@
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stlab/channel.hpp>
 #include <stlab/default_executor.hpp>
 
 using namespace stlab;
 
 int main() {
-  sender<int> sendA, sendB;
-  receiver<int> receiverA, receiverB;
-  std::tie(sendA, receiverA) = channel<int>(default_executor);
-  std::tie(sendB, receiverB) = channel<int>(default_executor);
+  // Build the chain tail
+  sender<std::string> resultInput;
+  receiver<std::string> resultOutput;
+  std::tie(resultInput, resultOutput) = channel<std::string>(default_executor);
 
-  auto printer = [](int x, int y) { printf("Process %d %d\n", x, y); };
+  // Fan-out to console
+  auto consolePrinter = [](std::string result) { std::cout << result << "\n"; };
 
-  auto printProcess = join(default_executor, printer, receiverA, receiverB);
+  auto consolePrinterProcess = resultOutput | consolePrinter;
 
-  receiverA.set_ready();
-  receiverB.set_ready();
+  // Fan-out to file
+  std::ofstream outputFile;
+  outputFile.open("Exercise2.output.txt");
 
-  sendA(1);
-  sendA(2);
-  sendB(3);
-  sendA(4);
-  sendB(5);
-  sendB(6);
+  auto filePrinter = [&outputFile](std::string result) {
+    outputFile << result << "\n";
+  };
+
+  auto filePrinterProcess = resultOutput | filePrinter;
+
+  // resultBuilder routes between the two stages in the chain
+
+  auto resultBuilder = [&resultInput](int intVal, std::string stringVal,
+                                      double doubleVal) {
+    std::ostringstream output;
+    output << intVal << stringVal << doubleVal;
+    resultInput(output.str());
+  };
+
+  resultOutput.set_ready();
+
+  // Build the head of the chain
+
+  sender<int> intInput;
+  receiver<int> intOutput;
+  std::tie(intInput, intOutput) = channel<int>(default_executor);
+  // Structured Bindings gives us a much nicer:
+  // auto [intInput, intOutput] = channel<int>(default_executor);
+
+  sender<std::string> stringInput;
+  receiver<std::string> stringOutput;
+  std::tie(stringInput, stringOutput) = channel<std::string>(default_executor);
+
+  sender<double> doubleInput;
+  receiver<double> doubleOutput;
+  std::tie(doubleInput, doubleOutput) = channel<double>(default_executor);
+
+  auto builderProcess = join(default_executor, resultBuilder, intOutput,
+                             stringOutput, doubleOutput);
+
+  intOutput.set_ready();
+  stringOutput.set_ready();
+  doubleOutput.set_ready();
+
+  intInput(0);
+  intInput(1);
+  stringInput("Bananas");
+  doubleInput(5.2);
+  stringInput("Apples");
+  doubleInput(66.3);
 
   int end;
   std::cin >> end;
