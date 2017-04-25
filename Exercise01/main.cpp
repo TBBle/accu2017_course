@@ -47,7 +47,10 @@ private:
     stuffDone.detach();
   }
 
-  void cancel() { _stop = true; }
+  void cancel() {
+    _cancelBtn.enabled(false);
+    _stop = true;
+  }
 
   std::atomic<bool> _stop = false;
   nana::button _oneBtn;
