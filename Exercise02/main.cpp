@@ -14,7 +14,9 @@ int main() {
   std::tie(resultInput, resultOutput) = channel<std::string>(default_executor);
 
   // Fan-out to console
-  auto consolePrinter = [](std::string result) { std::cout << result << "\n"; };
+  auto consolePrinter = [](const std::string &result) {
+    std::cout << result << "\n";
+  };
 
   auto consolePrinterProcess = resultOutput | consolePrinter;
 
@@ -22,7 +24,7 @@ int main() {
   std::ofstream outputFile;
   outputFile.open("Exercise2.output.txt");
 
-  auto filePrinter = [&outputFile](std::string result) {
+  auto filePrinter = [&outputFile](const std::string &result) {
     outputFile << result << "\n";
   };
 
@@ -30,7 +32,7 @@ int main() {
 
   // resultBuilder routes between the two stages in the chain
 
-  auto resultBuilder = [&resultInput](int intVal, std::string stringVal,
+  auto resultBuilder = [&resultInput](int intVal, const std::string &stringVal,
                                       double doubleVal) {
     std::ostringstream output;
     output << intVal << stringVal << doubleVal;
