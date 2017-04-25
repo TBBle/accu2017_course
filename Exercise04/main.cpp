@@ -1,13 +1,11 @@
-#include <nana/gui/wvl.hpp>
+#include <chrono>
 #include <nana/gui/widgets/button.hpp>
 #include <nana/gui/widgets/label.hpp>
-#include <chrono>
+#include <nana/gui/wvl.hpp>
 #include <thread>
 
-
-class cad_report
-{
-  int   _id;
+class cad_report {
+  int _id;
   std::string _val;
 
 public:
@@ -21,19 +19,15 @@ public:
   std::string val() const { return _val; }
 };
 
-
-class SmallWindow : public nana::form
-{
+class SmallWindow : public nana::form {
 public:
   SmallWindow()
-    : _resetBtn(*this, "Reset", true)
-    , _oneBtn(*this, "1", true)
-    , _twoBtn(*this, "2", true)
-    , _label(*this, "-")
-    , _status(*this, "Status: ")
-  {
+      : _resetBtn(*this, "Reset", true), _oneBtn(*this, "1", true),
+        _twoBtn(*this, "2", true), _label(*this, "-"),
+        _status(*this, "Status: ") {
     nana::place layout(*this);
-    layout.div("vert <> <<><reset_btn><>> <> <<><button_one><>> <<><button_two><>> <<><label><>> <status>");
+    layout.div("vert <> <<><reset_btn><>> <> <<><button_one><>> "
+               "<<><button_two><>> <<><label><>> <status>");
     layout["reset_btn"] << _resetBtn;
     layout["button_one"] << _oneBtn;
     layout["button_two"] << _twoBtn;
@@ -49,7 +43,6 @@ public:
     _twoBtn.enabled(false);
   }
 
-
 private:
   void reset() {
     _status.caption("Status: Performing reset ...");
@@ -62,26 +55,22 @@ private:
     _twoBtn.enabled(true);
   }
 
-  void displayReport(int id) {
-    showReport(_reports[id]);
-  }
+  void displayReport(int id) { showReport(_reports[id]); }
 
-  void showReport(const cad_report& report) {
+  void showReport(const cad_report &report) {
     _label.caption("Report " + report.val());
   }
 
-  nana::button    _resetBtn;
-  nana::button    _oneBtn;
-  nana::button    _twoBtn;
-  nana::label     _label;
-  nana::label     _status;
+  nana::button _resetBtn;
+  nana::button _oneBtn;
+  nana::button _twoBtn;
+  nana::label _label;
+  nana::label _status;
 
   std::vector<cad_report> _reports;
 };
 
-
-int main()
-{
+int main() {
   SmallWindow ex;
   ex.show();
   nana::exec();
