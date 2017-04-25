@@ -40,7 +40,7 @@ private:
       _cancelBtn.enabled(false);
     };
 
-    auto afterStuff = [this]() {};
+    // auto afterStuff = [this]() {};
     auto stuffDone =
         stlab::async(stlab::default_executor, doStuff); // .then(afterStuff);
     // Needed because stlab::future doens't have shared-state
@@ -52,7 +52,7 @@ private:
     _stop = true;
   }
 
-  std::atomic<bool> _stop = false;
+  std::atomic<bool> _stop{false};
   nana::button _oneBtn;
   nana::button _cancelBtn;
   nana::progress _progressBar;
