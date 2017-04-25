@@ -1,7 +1,10 @@
+#include <array>
 #include <chrono>
 #include <nana/gui/widgets/button.hpp>
 #include <nana/gui/widgets/label.hpp>
 #include <nana/gui/wvl.hpp>
+#include <stlab/default_executor.hpp>
+#include <stlab/future.hpp>
 #include <thread>
 
 class cad_report {
@@ -12,7 +15,7 @@ public:
   cad_report() : _id(-1) {}
 
   cad_report(int id) : _id(id) {
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::this_thread::sleep_for(std::chrono::seconds(3 * (_id + 1)));
     _val = 'A' + id;
   }
 
@@ -20,6 +23,8 @@ public:
 };
 
 class SmallWindow : public nana::form {
+  static const int reportCount = 2;
+
 public:
   SmallWindow()
       : _resetBtn(*this, "Reset", true), _oneBtn(*this, "1", true),
@@ -47,12 +52,28 @@ private:
   void reset() {
     _status.caption("Status: Performing reset ...");
     _reports.clear();
-    _reports.emplace_back(0);
-    _reports.emplace_back(1);
+    _reports.resize(_reportLoads.size());
+    _currentReport = -1;
+    _oneBtn.enabled(false);
+    _twoBtn.enabled(false);
+
+    for (size_t i = 0; i < _reportLoads.size(); ++i) {
+      _reportLoads[i].reset();
+      _reportLoads[i] = stlab::async(stlab::default_executor, [this, i]() {
+        _reports[i] = cad_report((int)i);
+        switch (i) {
+        case 0:
+          _oneBtn.enabled(true);
+          break;
+        case 1:
+          _twoBtn.enabled(true);
+          break;
+        }
+      });
+    }
+
     _label.caption("-");
     _status.caption("Status: Reset done.");
-    _oneBtn.enabled(true);
-    _twoBtn.enabled(true);
   }
 
   void displayReport(int id) { showReport(_reports[id]); }
@@ -68,6 +89,9 @@ private:
   nana::label _status;
 
   std::vector<cad_report> _reports;
+
+  std::atomic<int> _currentReport{-1};
+  std::array<stlab::future<void>, reportCount> _reportLoads;
 };
 
 int main() {
